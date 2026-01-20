@@ -505,6 +505,8 @@
 
                 lastX = coords.x;
                 lastY = coords.y;
+
+                saveSignature(canvasId);
             }
 
             function stopDrawing() {
@@ -526,12 +528,35 @@
             const pad = signaturePads[canvasId];
             if (pad) {
                 pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+                localStorage.removeItem(`signature_resign_${canvasId}`);
+            }
+        }
+
+        function saveSignature(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const dataUrl = canvas.toDataURL();
+            localStorage.setItem(`signature_resign_${canvasId}`, dataUrl);
+        }
+
+        function loadSignature(canvasId) {
+            const dataUrl = localStorage.getItem(`signature_resign_${canvasId}`);
+            if (dataUrl) {
+                const canvas = document.getElementById(canvasId);
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = dataUrl;
             }
         }
 
         window.addEventListener('load', function() {
             initSignaturePad('empSignature');
             initSignaturePad('supSignature');
+
+            loadSignature('empSignature');
+            loadSignature('supSignature');
         });
 
         // ==================== AUTO-EXPAND TEXTAREAS ====================
@@ -559,8 +584,51 @@
                     textarea.style.height = 'auto';
                     autoExpand(textarea);
                 });
+
+                localStorage.removeItem('resignationFormData');
             }
         }
+
+        // ==================== SAVE/LOAD FORM DATA ====================
+        document.getElementById('resignationForm').addEventListener('input', function() {
+            const formData = new FormData(this);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (data[key]) {
+                    if (Array.isArray(data[key])) {
+                        data[key].push(value);
+                    } else {
+                        data[key] = [data[key], value];
+                    }
+                } else {
+                    data[key] = value;
+                }
+            }
+            
+            localStorage.setItem('resignationFormData', JSON.stringify(data));
+        });
+
+        window.addEventListener('load', function() {
+            const savedData = localStorage.getItem('resignationFormData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                
+                for (let key in data) {
+                    const elements = document.getElementsByName(key);
+                    elements.forEach(element => {
+                        if (element.type === 'checkbox') {
+                            const values = Array.isArray(data[key]) ? data[key] : [data[key]];
+                            element.checked = values.includes(element.value);
+                        } else {
+                            element.value = data[key];
+                        }
+                    });
+                }
+                
+                document.querySelectorAll('textarea').forEach(autoExpand);
+            }
+        });
     </script>
 </body>
 </html>
