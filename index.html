@@ -154,6 +154,10 @@
             border-color: #4facfe;
         }
 
+        .print-text {
+            display: none;
+        }
+
         .explanation-note {
             font-size: 13px;
             color: #666;
@@ -425,8 +429,16 @@
             }
 
             textarea {
+                display: none;
+            }
+
+            .print-text {
+                display: block;
+                white-space: pre-wrap;
+                word-break: break-word;
                 border: 1px solid #000;
-                overflow: visible;
+                padding: 12px;
+                min-height: 80px;
             }
 
             .signature-display-box {
@@ -657,6 +669,7 @@
                     <label for="explanation">Reason / Explanation:</label>
                     <div class="explanation-note">Please provide explanation if "Other" is checked or if additional comments / explanation are beneficial.</div>
                     <textarea id="explanation" name="explanation" class="textarea-expanding" placeholder="Enter explanation or additional comments..."></textarea>
+                    <div class="print-text" data-for="explanation"></div>
                 </div>
             </div>
 
@@ -693,7 +706,7 @@
             </div>
 
             <div class="button-container">
-                <button type="button" class="btn-print" onclick="window.print()">Print / Save as PDF</button>
+                <button type="button" class="btn-print" onclick="printForm()">Print / Save as PDF</button>
                 <button type="button" class="btn-clear" onclick="clearForm()">Clear Form</button>
             </div>
         </form>
@@ -923,6 +936,22 @@
                 }
             });
         }
+
+        function syncPrintText() {
+            document.querySelectorAll('.print-text[data-for]').forEach(printBlock => {
+                const textarea = document.getElementById(printBlock.dataset.for);
+                if (textarea) {
+                    printBlock.textContent = textarea.value;
+                }
+            });
+        }
+
+        function printForm() {
+            syncPrintText();
+            window.print();
+        }
+
+        window.addEventListener('beforeprint', syncPrintText);
 
         // ==================== AUTO-EXPAND TEXTAREAS ====================
         function autoExpand(textarea) {
